@@ -1,0 +1,122 @@
+---
+- name: Install all programm for backup server
+  yum_repos:
+    name: pg_probackup
+    description: PG_ProBackup repository
+    baseurl: https://repo.postgrespro.ru/pg_probackup/keys/pg_probackup-repo-oraclelinux.noarch.rpm
+
+- name: Install Pg_Probackup all versions
+  yum:
+    name:
+      - pg_probackup-10
+      - pg_probackup-10-debuginfo
+      - pg_probackup-11
+      - pg_probackup-11-debuginfo
+      - pg_probackup-12
+      - pg_probackup-12-debuginfo
+      - pg_probackup-13
+      - pg_probackup-13-debuginfo
+      - pg_probackup-14
+      - pg_probackup-14-debuginfo
+    state: latest
+
+- name: Creating users proback10 without admin access
+  user:
+    name: proback10
+    group: pgproback
+    password: {{ upassword_proback10 | password_hash('sha512') }}
+
+- name: Creating users proback11 without admin access
+  user:
+    name: proback11
+    group: pgproback
+    password: {{ upassword_proback11 | password_hash('sha512') }}
+
+- name: Creating users proback12 without admin access
+  user:
+    name: proback12
+    group: pgproback
+    password: {{ upassword_proback12 | password_hash('sha512') }}
+
+- name: Creating users proback13 without admin access
+  user:
+    name: proback13
+    group: pgproback
+    password: {{ upassword_proback13 | password_hash('sha512') }}
+
+- name: Creating users proback14 without admin access
+  user:
+    name: proback14
+    group: pgproback
+    password: {{ upassword_proback14 | password_hash('sha512') }}
+
+- name: Creating users proback14 with admin access
+  user:
+    name: proback_adm
+    group: pgproback
+    password: {{ upassword_proback_adm | password_hash('sha512') }}
+    groups: admin append=yes
+
+- name: Create root dir for pg_probackup
+  file:
+   path: /data/
+   owner: proback_adm
+   group: pgproback
+   state: directory
+   mode: '0774'
+
+- name: Create dir for pg_probackup-10
+  file:
+   path: /data/10/
+   owner: proback10
+   group: pgproback
+   state: directory
+   mode: '0774'
+
+- name: Create dir for pg_probackup-11
+  file:
+   path: /data/11/
+   owner: proback11
+   group: pgproback
+   state: directory
+   mode: '0774'
+
+- name: Create dir for pg_probackup-12
+  file:
+   path: /data/12/
+   owner: proback12
+   group: pgproback
+   state: directory
+   mode: '0774'
+
+- name: Create dir for pg_probackup-13
+  file:
+   path: /data/13/
+   owner: proback13
+   group: pgproback
+   state: directory
+   mode: '0774'
+
+- name: Create dir for pg_probackup-14
+  file:
+   path: /data/14/
+   owner: proback14
+   group: pgproback
+   state: directory
+   mode: '0774'
+
+- name: Creating users ansible_pg with admin access
+  user:
+    name: ansible_pg
+    group: pgproback
+    password: {{ upassword_ansible_pg | password_hash('sha512') }}
+    groups: admin append=yes
+
+- name: Create dir for ansible
+  file:
+   path: /ansible
+   owner: ansible_pg
+   group: pgproback
+   state: directory
+   mode: '0774'
+

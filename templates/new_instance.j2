@@ -1,0 +1,75 @@
+#!/bin/bash
+
+echo "Hello. This is the script to prepare your instance for a PostgreSQL backup. Continue installation?"
+read ANSWER 
+
+case $ANSWER in 
+ 
+        yes)
+        {% if OS_VERSION == 'OEL7' %}
+            echo -ne "You choose OEL7. Install pg_probackup...\n"
+            echo "rpm -ivh https://repo.postgrespro.ru/pg_probackup/keys/pg_probackup-repo-oraclelinux.noarch.rpm >/dev/null"
+            echo "yum install -y pg_probackup-{{ PG_VERSION }} >/dev/null"
+            echo "yum install -y pg_probackup-{{ PG_VERSION }}-debuginfo >/dev/null"
+            echo "Pg_probackup successfully installed!\n"
+        {% elif OS_VERSION == 'OEL8' %}
+            echo -ne "You choose OEL8. Install pg_probackup...\n"
+            echo "rpm -ivh https://repo.postgrespro.ru/pg_probackup/keys/pg_probackup-repo-oraclelinux.noarch.rpm >/dev/null"
+            echo "dnf install -y pg_probackup-{{ PG_VERSION }} >/dev/null"
+            echo "dnf install -y pg_probackup-{{ PG_VERSION }}-debuginfo >/dev/null"
+            echo "Pg_probackup successfully installed!\n"
+        {% elif OS_VERSION == 'CentOS7' %}
+            echo -ne "You choose CentOS7. Install pg_probackup...\n"
+            echo "rpm -ivh https://repo.postgrespro.ru/pg_probackup/keys/pg_probackup-repo-centos.noarch.rpm >/dev/null"
+            echo "yum install -y pg_probackup-{{ PG_VERSION }} >/dev/null"
+            echo "yum install -y pg_probackup-{{ PG_VERSION }}-debuginfo >/dev/null"
+            echo "Pg_probackup successfully installed!\n"
+        {% elif OS_VERSION == 'CentOS8' %}
+            echo -ne "You choose CentOS8. Install pg_probackup...\n"
+            echo "rpm -ivh https://repo.postgrespro.ru/pg_probackup/keys/pg_probackup-repo-centos.noarch.rpm >/dev/null"
+            echo "dnf install -y pg_probackup-{{ PG_VERSION }} >/dev/null"
+            echo "dnf install -y pg_probackup-{{ PG_VERSION }}-debuginfo >/dev/null"
+            echo "Pg_probackup successfully installed!\n"
+        {% elif OS_VERSION == 'RHEL7' %}
+            echo -ne "You choose RHEL7. Install pg_probackup...\n"
+            echo "rpm -ivh https://repo.postgrespro.ru/pg_probackup/keys/pg_probackup-repo-rhel.noarch.rpm >/dev/null"
+            echo "yum install -y pg_probackup-{{ PG_VERSION }} >/dev/null"
+            echo "yum install -y pg_probackup-{{ PG_VERSION }}-debuginfo >/dev/null"
+            echo "Pg_probackup successfully installed!\n"
+        {% elif OS_VERSION == 'RHEL8' %}
+            echo -ne "You choose RHEL8. Install pg_probackup...\n"
+            echo "rpm -ivh https://repo.postgrespro.ru/pg_probackup/keys/pg_probackup-repo-rhel.noarch.rpm >/dev/null"
+            echo "dnf install -y pg_probackup-{{ PG_VERSION }} >/dev/null"
+            echo "dnf install -y pg_probackup-{{ PG_VERSION }}-debuginfo >/dev/null"
+            echo "Pg_probackup successfully installed!\n"
+        {% endif %}
+        echo "Create pgproback user...\n"
+        useradd pgproback{{ PG_VERSION }} -G postgres"
+        echo "User created!"
+        echo "Add entry to pg_hba.conf...\n"
+        echo "host backupdb pgproback 0.0.0.0/0 {{ PG_PASS_METHOD }}" > {{PG_HBA_DIR}}/pg_hba.conf
+        echo "host replication pgproback 0.0.0.0/0 {{ PG_PASS_METHOD }}" > {{PG_HBA_DIR}}/pg_hba.conf
+        echo "Entry added!"
+        read -p "Enter the name of the superuser:" PG_SU_USER
+        read -p "Enter the database to connect: " PG_SU_DB
+        echo "Launch SQL script...\n"
+        echo "CREATE DATABASE backupdb; \c backupdb; CREATE ROLE backup WITH LOGIN REPLICATION password '{{ proback_pass }}'; \
+        GRANT USAGE ON SCHEMA pg_catalog TO backup; GRANT EXECUTE ON FUNCTION pg_catalog.current_setting(text) TO backup; \
+        GRANT EXECUTE ON FUNCTION pg_catalog.pg_is_in_recovery() TO backup; GRANT EXECUTE ON FUNCTION pg_catalog.pg_start_backup(text, boolean, boolean) TO backup; \
+        GRANT EXECUTE ON FUNCTION pg_catalog.pg_stop_backup(boolean, boolean) TO backup; GRANT EXECUTE ON FUNCTION pg_catalog.pg_create_restore_point(text) TO backup; \
+        GRANT EXECUTE ON FUNCTION pg_catalog.pg_switch_wal() TO backup; GRANT EXECUTE ON FUNCTION pg_catalog.pg_last_wal_replay_lsn() TO backup; \
+        GRANT EXECUTE ON FUNCTION pg_catalog.txid_current() TO backup; GRANT EXECUTE ON FUNCTION pg_catalog.txid_current_snapshot() TO backup; \
+        GRANT EXECUTE ON FUNCTION pg_catalog.txid_snapshot_xmax(txid_snapshot) TO backup; GRANT EXECUTE ON FUNCTION pg_catalog.pg_control_checkpoint() TO backup;" | psql -1 -U $PG_SU_USER -d $PG_SU_DB
+        echo "Script done!\n"
+        echo "you need to do a reload config after completion script\n"
+        echo "Installation completed successfully!"
+        ;; 
+
+        no) 
+        echo "Script stopped\n" 
+        ;; 
+ 
+        *) 
+        echo "Wrong answer\n" 
+        ;; 
+esac

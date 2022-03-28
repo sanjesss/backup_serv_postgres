@@ -1,0 +1,62 @@
+---
+# Генерирую файл для клиента
+# Ввожу версию ОС
+# Ввожу версию ПГ
+# Ввожу имя сервера
+# Ввожу Порт
+# Имя юзера хардкод
+# Пароль генерируется автоматом, хардкод
+# Имя БД хардкод
+#
+#
+# После записываю вывод в .pgpass юзера
+# сервер:порт:база_данных:имя_пользователя:пароль
+- name: Create bash script for client
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    proback_pass: "{{ lookup('password', '/dev/null length=18 chars=ascii_letters') }}"
+
+  vars_prompt:
+    - name: OS_VERSION
+      prompt: "Please enter your OS type [OEL7, OEL8, CentOS7, CentOS8, RHEL7, RHEL8]:" 
+      private: no
+
+    - name: PG_VERSION
+      prompt: "Please enter your major PG version [10-14]:" 
+      private: no
+    
+    - name: PG_PORT
+      prompt: "Please enter your PG port:"
+      default: 5432 
+      private: no
+
+    - name: PG_HBA_DIR
+      prompt: "Please enter your pg_hba.conf dir:"
+      private: no
+
+    - name: PG_PASS_METHOD
+      prompt: "Please enter your pass method [password, md5, scram-sha-256]:"
+      private: no
+
+    - name: CLIENT_SRV
+      prompt: "Please enter your client server full DNS name:" 
+      private: no
+
+  tasks:
+    - name: Create client script file
+      template:
+        src: templates/new_instance.j2
+        dest: /ansible/clients/name.sh
+        owner: proback{{ PG_VERSION }}
+        group: pgproback
+        mode: u+rwx,g+rw,o+r
+
+    - name: Add entry to .pgpass
+      lineinfile:
+         dest: /data/home/{{pg_version}}/.pgpass
+         line: "{{ CLIENT_SRV }}:{{ PG_PORT }}:backupdb:backup:{{ proback_pass }}"
+         owner: proback{{ PG_VERSION }}
+         group: pgproback
+         mode: '0600'

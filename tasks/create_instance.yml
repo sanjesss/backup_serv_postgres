@@ -1,0 +1,28 @@
+---
+- name: Create dir for instance
+  file:
+   path: /data/{{ pg_version }}/{{ instance_name }}
+   owner: proback{{ pg_version }}
+   group: pgproback
+   state: directory
+   mode: '0774'
+
+- name: Init directory for instance
+  command: /bin/pg_probackup-{{ PG_VERSION_NUMBER }} add-instance -B /data/{{ pg_version }} --instance "{{ ansible_hostname }}"
+  become: true
+  become_user: proback{{pg_version}}
+  ## неверная команда init
+
+- name: Set config for PG
+  command: /bin/pg_probackup-{{ PG_VERSION_NUMBER }} set-config -B /backup/ --instance "{{ ansible_hostname }}" --wal-depth="{{ PG_PRO_WAL_DEPTH }}" --retention-redundancy="{{ PG_PRO_REDUNDANCY }}" --archive-timeout="{{ PG_PRO_ARCHIVE_TIMEOUT }}" --retention-window="{{ PG_PRO_WINDOW }}"
+  become: true
+  become_user: proback{{pg_version}}
+  ## неверные переменные параметров
+
+- name: Add task to crontab for FULL backup
+  import_tasks: full_backup.yml
+  when: INSTALL_PG | bool
+
+- name: Add task to crontab for DELTA backup
+  import_tasks: delta_backup.yml
+  when: INSTALL_PG | bool
